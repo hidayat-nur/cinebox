@@ -51,7 +51,7 @@ const Player = ({route}: Props): React.JSX.Element => {
   const {primary} = useThemeStore(state => state);
   const {provider} = useContentStore();
   const [activeEpisode, setActiveEpisode] = useState(
-    route.params.episodeList[route.params.linkIndex],
+    route.params?.episodeList?.[route.params.linkIndex],
   );
   const videoPositionRef = useRef({position: 0, duration: 0});
   const lastSavedPositionRef = useRef(0);
@@ -153,8 +153,8 @@ const Player = ({route}: Props): React.JSX.Element => {
           contentUrl: selectedStream.link,
           contentType: 'video/x-matroska',
           metadata: {
-            title: route.params.primaryTitle,
-            subtitle: route.params.secondaryTitle,
+            title: route.params?.primaryTitle,
+            subtitle: route.params?.secondaryTitle,
             type: 'movie',
             images: [
               {
@@ -181,24 +181,22 @@ const Player = ({route}: Props): React.JSX.Element => {
     console.log('activeEpisode', activeEpisode);
     const fetchStream = async () => {
       setLoading(true);
-      // check if downloaded
-      if (route.params.primaryTitle && route.params.secondaryTitle) {
-        const file = (
-          route.params?.primaryTitle +
-          route.params?.secondaryTitle +
-          activeEpisode.title
-        ).replaceAll(/[^a-zA-Z0-9]/g, '_');
-        const exists = await ifExists(file);
-        if (exists) {
-          setStream([{server: 'downloaded', link: exists, type: 'mp4'}]);
-          setSelectedStream({server: 'downloaded', link: exists, type: 'mp4'});
-          setLoading(false);
-          return;
-        }
+      if (route.params?.directUrl) {
+        setStream([
+          {server: 'Downloaded', link: route.params?.directUrl, type: 'mp4'},
+        ]);
+        setSelectedStream({
+          server: 'Downloaded',
+          link: route.params?.directUrl,
+          type: 'mp4',
+        });
+        setLoading(false);
+        return;
       }
+
       const data = await manifest[
-        route.params.providerValue || provider.value
-      ].GetStream(activeEpisode.link, route.params.type, controller.signal);
+        route.params?.providerValue || provider?.value
+      ].GetStream(activeEpisode.link, route.params?.type, controller.signal);
       const streamAbleServers = data.filter(
         // filter out non streamable servers
         stream =>
@@ -254,7 +252,7 @@ const Player = ({route}: Props): React.JSX.Element => {
   }, [selectedStream]);
 
   useEffect(() => {
-    setSearchQuery(route.params.primaryTitle || '');
+    setSearchQuery(route.params?.primaryTitle || '');
   }, []);
 
   const setToast = (message: string, duration: number) => {
@@ -316,11 +314,11 @@ const Player = ({route}: Props): React.JSX.Element => {
           ...(selectedStream?.type === 'm3u8' && {type: 'm3u8'}),
           headers: selectedStream?.headers,
           metadata: {
-            title: route.params.primaryTitle,
-            subtitle: activeEpisode.title,
-            artist: activeEpisode.title,
+            title: route.params?.primaryTitle,
+            subtitle: activeEpisode?.title,
+            artist: activeEpisode?.title,
             description: activeEpisode.title,
-            imageUri: route.params.poster.poster,
+            imageUri: route.params?.poster?.poster,
           },
         }}
         textTracks={externalSubs}
@@ -350,7 +348,11 @@ const Player = ({route}: Props): React.JSX.Element => {
           subtitlesFollowVideo: false,
         }}
         title={{
-          primary: route.params.primaryTitle || '',
+          primary:
+            route.params?.primaryTitle &&
+            route.params?.primaryTitle?.length > 70
+              ? route.params?.primaryTitle.slice(0, 70) + '...'
+              : route.params?.primaryTitle || '',
           secondary: activeEpisode.title,
         }}
         navigator={navigation}
@@ -499,8 +501,8 @@ const Player = ({route}: Props): React.JSX.Element => {
       </MotiView>
 
       {/* next episode button */}
-      {route.params.episodeList.indexOf(activeEpisode) <
-        route.params.episodeList.length - 1 &&
+      {route.params?.episodeList?.indexOf(activeEpisode) <
+        route.params?.episodeList?.length - 1 &&
         videoPositionRef.current.position / videoPositionRef.current.duration >
           0.8 && (
           <MotiView
@@ -513,10 +515,10 @@ const Player = ({route}: Props): React.JSX.Element => {
               className="flex-row items-center"
               onPress={() => {
                 const nextEpisodeIndex =
-                  route.params.episodeList.indexOf(activeEpisode);
-                if (nextEpisodeIndex < route.params.episodeList.length - 1) {
+                  route.params?.episodeList.indexOf(activeEpisode);
+                if (nextEpisodeIndex < route.params?.episodeList?.length - 1) {
                   setActiveEpisode(
-                    route.params.episodeList[nextEpisodeIndex + 1],
+                    route.params?.episodeList[nextEpisodeIndex + 1],
                   );
                 } else {
                   ToastAndroid.show('No more episodes', ToastAndroid.SHORT);

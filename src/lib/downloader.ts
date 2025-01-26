@@ -142,7 +142,7 @@ export const downloadManager = async ({
             onlyAlertOnce: true,
             progress: {
               max: 100,
-              current: Math.abs(progress) * 100,
+              current: Math.abs(progress) * 100 > 100 ? 100 : progress * 100,
               indeterminate: false,
             },
             pressAction: {
@@ -169,6 +169,9 @@ export const downloadManager = async ({
         title: 'Download complete',
         body: title,
         android: {
+          pressAction: {
+            id: 'default',
+          },
           smallIcon: 'ic_notification',
           channelId,
           color: primary,
@@ -191,6 +194,9 @@ export const downloadManager = async ({
         title: 'Download failed',
         body: title,
         android: {
+          pressAction: {
+            id: 'default',
+          },
           smallIcon: 'ic_notification',
           channelId,
           color: primary,
